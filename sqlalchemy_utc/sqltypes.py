@@ -23,6 +23,12 @@ class UtcDateTime(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         if value is not None:
+            if isinstance(value, str):  # Handling FastAPI/Pydantic datetime parsing; room for improvement or to handle multiple known good datetime strings
+                try:
+                    value = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f+00:00')
+                    value = value.replace(tzinfo=utc)
+                except ValueError:
+                    raise ValueError('expected datetime string in format "%Y-%m-%dT%H:%M:%S.%f+00:00"')
             if not isinstance(value, datetime.datetime):
                 raise TypeError('expected datetime.datetime, not ' +
                                 repr(value))
